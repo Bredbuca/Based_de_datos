@@ -1,0 +1,176 @@
+---
+title: "Estudio de las oportunidades laborales en Boyaca"
+author: "Brian Buitrago"
+output: word_document
+---
+#Analisis Descriptivo
+
+base <- 
+  readXL("C:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx",
+   rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
+
+```{r}
+library(readxl)
+base<- read_excel("C:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx")
+
+```
+```{r}
+#tablas de contingencia Sexo-Edad
+library(abind, pos=20)
+local({
+  .Table <- xtabs(~Sexo+Edad, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  
+})
+
+```
+```{r}
+#Relacion entre estado civil- medio de busqueda
+local({
+  .Table <- xtabs(~Estado_Civil+Medio_de_busqueda, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+#H0: Hay independencia entre las variables(NO hay asociacion entre las variables)
+
+
+```
+
+Dado $H0:$ Hay independencia entre las variables Estado Civil y Medio de busqueda.$\alpha = 0.1$ y $p-valor=p-valor= 0.5815$, No se rechaza o se acepta la hipotesis nula.
+
+```{r}
+#Relacion entre estado sexo- medio de busqueda
+local({
+  .Table <- xtabs(~Sexo+Medio_de_busqueda, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+
+```
+
+Dado $H0:$ Hay independencia entre las variables Sexo y Medio de busqueda.$\alpha = 0.1$ y $p-valor=p-valor= 0.1151$, No se rechaza o se acepta la hipotesis nula.
+
+```{r}
+#Relacion entre estado sexo- ocupado
+local({
+  .Table <- xtabs(~Sexo+Ocupado, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+#H0: Hay independencia entre las variables(NO hay asociacion entre las variables)
+```
+
+Dado $H0:$ Hay independencia entre las variables Sexo y ocupacion.
+$Hi:$ No hay independencia
+$\alpha = 0.1$ y $p-valor=p-valor= 0.03694$, se rechaza la hipotesis nula.
+
+```{r}
+#Variable Cuantitativa
+library(RcmdrMisc)
+library(e1071, pos=21)
+numSummary(base[,"Tiempo_de_busqueda", drop=FALSE], 
+  statistics=c("mean", "sd", "IQR", "cv","median")) #"quantiles", 
+  #quantiles=c(0,.25,.5,.75,1))
+```
+En promedio una persona dura al rededor de 32 semanas para conseguir empleo en el departamento de Boyacá.
+
+#Graficas
+*cualitativas:Diagrama de sectores o de barras (Unicamente cuando tengan pocas caracteristica en la variable)
+
+*Cuantitativas:  Diagrama caja y Bigotes( Para mostrar los valores atipicos).
+
+
+#Analisis de correspondencias Multiples (ACM)
+
+En esta seccion se presentaran los mapas factoriales correspondientes a las asociaciones de las variables de tipo cualitativo.
+
+Teoricamente se deberian presentar los mapas donde las pruebas $ji-cuadrado$ muestren asociacion de las variables.
+
+```{r}
+library(FactoMineR)
+base.MCA<-base[, c("Edad", "Ocupado")]
+res<-MCA(base.MCA, ncp=5, graph = FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", "var"), 
+  invisible=c("ind"), title="Edad vs ocupado"))
+
+remove(base.MCA)
+```
+
+Se presenta una asociacion entre los individuos que Si estan ocupados ( Tienen actuallmente trabajo) y los grupos de edad entre 29 a 40 años y entre 41 a 60 y una asociacion entre los individuos que no estan ocupados y el grupo de edad entre 18 y 28 años. Ademas para el grupo de mas de 60 añosno se asocia a ninguna caracteristica de la variable ocupacion.
+
+
+
+```{r}
+#sexo vs aspiracion salarial
+base.MCA<-base[, c("Sexo", "Salario")]
+res<-MCA(base.MCA, ncp=5, graph = FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", "var"), 
+  invisible=c("ind"), title="Sexo vs Aspiracion Salarial"))
+
+
+remove(base.MCA)
+
+```
+
+Para el grupo de Mujeres se presenta asociacion con las Aspiraciones salariales a 1 SMLV y entre 1 y 4 SMLV , mientras que los hombres se asocian a una aspiracion salarial de mas de 4 SMLV.
+
+```{r}
+#edad vs Sexo vs nivel de estudios
+base.MCA<-base[, c("Edad", "Sexo", 
+  "Nivel_Estudio")]
+res<-MCA(base.MCA, ncp=5, graph = 
+  FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", 
+  col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", 
+  "var"), invisible=c("ind"), 
+  title="Edad_vs_Sexo_vs_Nivel_de_estudios"))
+
+
+remove(base.MCA)
+```
+
+En el grafico se evidencia una relacion de las mujeres con el grupo de edad de 29-40 anos y  Maximo nivel de estudios Posgrado. Un segundo grupo recoge a los hombres con los grupos de edad de 18-28 años y de 21-60 años con maximos niveles de estudios de bachillerato, Tecnico , Universitario. Por ultimo las personas de más de 60 años se asocian al maximo nivel de estudios de primaria.
+
+#Modelo Logit
+
+* Primero: se debe seleccionar la variable Y teniendo en cuenta el objetivo a desarrollar. Para este caso la variable Y sera Ocupados (0: Si estan Ocupados y 1: No estan Ocupados). El grupo de comparacion sera si está ocupado, con el fin de medir la probabilidad de pasar de NO ocupado a SI ocupado.
+
+*Segundo: En el codigo de R se deben pasar todas las variables categoricas a modo Factor.
+
+*Tercero: En cada variable se debe seleccionar un grupo de comparacion, por ejemplo, en Sexo el grupo 0 es la mujer. En nivel educativo el grupo 0 es posgrado. Ciudad no importa. Edad el grupo 0 = 18-28 años. Estado civil no importa. Jefe de Hogar el grupo 0 es SI. Asignacion salarial el grupo 0 mas de 4SMLV. Medios de Busqueda No importa.
+
+*Cuarto: Pruebas de independencia de la variable Y con todas las covariables (Menos la(s)cuantitativas). Las variables que tengan asociacion son las que se incluiran al modelo.
+
+*Quinto: Revisar el balanceo de la variable Y. En este caso se busca que la relacion de los dos grupos este lo mas cercano posible al 50-50%. En caso de no tener balanceo se debe aplicar técnicas de lower y upper.
+
+*Sexto: Crear dos bases, entrenamiento y prueba (80-20) (90-10)
+
+*Septimo: Corre el modelo con el entrenamiendo y se aplican las pruebas a la base de prueba (test).
+
+*Octavo: Se corre el modelo con todos los datos y se interpreta.
+
+
+
+
