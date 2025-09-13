@@ -1,0 +1,395 @@
+---
+title: "CaracterizacionBoyaca"
+author: "Brian Buitrago"
+output: word_document
+---
+
+#Analisis Descriptivo
+
+base <- 
+  readXL("C:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx",
+   rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
+
+```{r}
+library(dplyr)
+library(caret)
+
+library(readxl)
+base<- read_excel("D:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx")
+
+```
+```{r}
+#tablas de contingencia Sexo-Edad
+library(abind, pos=20)
+local({
+  .Table <- xtabs(~Sexo+Edad, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  
+})
+
+```
+```{r}
+#Relacion entre estado civil- medio de busqueda
+local({
+  .Table <- xtabs(~Estado_Civil+Medio_de_busqueda, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+#H0: Hay independencia entre las variables(NO hay asociacion entre las variables)
+
+
+```
+
+Dado $H0:$ Hay independencia entre las variables Estado Civil y Medio de busqueda.$\alpha = 0.1$ y $p-valor=p-valor= 0.5815$, No se rechaza o se acepta la hipotesis nula.
+
+```{r}
+#Relacion entre estado sexo- medio de busqueda
+local({
+  .Table <- xtabs(~Sexo+Medio_de_busqueda, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+
+```
+
+Dado $H0:$ Hay independencia entre las variables Sexo y Medio de busqueda.$\alpha = 0.1$ y $p-valor=p-valor= 0.1151$, No se rechaza o se acepta la hipotesis nula.
+
+```{r}
+#Relacion entre estado sexo- ocupado
+local({
+  .Table <- xtabs(~Sexo+Ocupado, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+#H0: Hay independencia entre las variables(NO hay asociacion entre las variables)
+```
+
+Dado $H0:$ Hay independencia entre las variables Sexo y ocupacion.
+$Hi:$ No hay independencia
+$\alpha = 0.1$ y $p-valor=p-valor= 0.03694$, se rechaza la hipotesis nula.
+
+```{r}
+#Variable Cuantitativa
+library(RcmdrMisc)
+library(e1071, pos=21)
+numSummary(base[,"Tiempo_de_busqueda", drop=FALSE], 
+  statistics=c("mean", "sd", "IQR", "cv","median")) #"quantiles", 
+  #quantiles=c(0,.25,.5,.75,1))
+```
+En promedio una persona dura al rededor de 32 semanas para conseguir empleo en el departamento de Boyacá.
+
+#Graficas
+*cualitativas:Diagrama de sectores o de barras (Unicamente cuando tengan pocas caracteristica en la variable)
+
+*Cuantitativas:  Diagrama caja y Bigotes( Para mostrar los valores atipicos).
+
+
+#Analisis de correspondencias Multiples (ACM)
+
+En esta seccion se presentaran los mapas factoriales correspondientes a las asociaciones de las variables de tipo cualitativo.
+
+Teoricamente se deberian presentar los mapas donde las pruebas $ji-cuadrado$ muestren asociacion de las variables.
+
+```{r}
+library(FactoMineR)
+base.MCA<-base[, c("Edad", "Ocupado")]
+res<-MCA(base.MCA, ncp=5, graph = FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", "var"), 
+  invisible=c("ind"), title="Edad vs ocupado"))
+
+remove(base.MCA)
+```
+
+Se presenta una asociacion entre los individuos que Si estan ocupados ( Tienen actuallmente trabajo) y los grupos de edad entre 29 a 40 años y entre 41 a 60 y una asociacion entre los individuos que no estan ocupados y el grupo de edad entre 18 y 28 años. Ademas para el grupo de mas de 60 añosno se asocia a ninguna caracteristica de la variable ocupacion.
+
+
+
+```{r}
+#sexo vs aspiracion salarial
+base.MCA<-base[, c("Sexo", "Salario")]
+res<-MCA(base.MCA, ncp=5, graph = FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", "var"), 
+  invisible=c("ind"), title="Sexo vs Aspiracion Salarial"))
+
+
+remove(base.MCA)
+
+```
+
+Para el grupo de Mujeres se presenta asociacion con las Aspiraciones salariales a 1 SMLV y entre 1 y 4 SMLV , mientras que los hombres se asocian a una aspiracion salarial de mas de 4 SMLV.
+
+```{r}
+#edad vs Sexo vs nivel de estudios
+base.MCA<-base[, c("Edad", "Sexo", 
+  "Nivel_Estudio")]
+res<-MCA(base.MCA, ncp=5, graph = 
+  FALSE)
+print(plot.MCA(res, axes=c(1, 2), 
+  new.plot=TRUE, col.ind="black", 
+  col.ind.sup="blue", 
+  col.var="darkred", 
+  col.quali.sup="darkgreen", 
+  label=c("ind.sup", "quali.sup", 
+  "var"), invisible=c("ind"), 
+  title="Edad_vs_Sexo_vs_Nivel_de_estudios"))
+
+
+remove(base.MCA)
+```
+
+En el grafico se evidencia una relacion de las mujeres con el grupo de edad de 29-40 anos y  Maximo nivel de estudios Posgrado. Un segundo grupo recoge a los hombres con los grupos de edad de 18-28 años y de 21-60 años con maximos niveles de estudios de bachillerato, Tecnico , Universitario. Por ultimo las personas de más de 60 años se asocian al maximo nivel de estudios de primaria.
+
+#Modelo Logit
+
+* Primero: se debe seleccionar la variable Y teniendo en cuenta el objetivo a desarrollar. Para este caso la variable Y sera Ocupados (0: Si estan Ocupados y 1: No estan Ocupados). El grupo de comparacion sera si está ocupado, con el fin de medir la probabilidad de pasar de NO ocupado a SI ocupado.
+
+*Segundo: En el codigo de R se deben pasar todas las variables categoricas a modo Factor.
+
+*Tercero: En cada variable se debe seleccionar un grupo de comparacion, por ejemplo, en Sexo el grupo 0 es la mujer. En nivel educativo el grupo 0 es posgrado. Ciudad no importa. Edad el grupo 0 = 18-28 años. Estado civil no importa. Jefe de Hogar el grupo 0 es SI. Asignacion salarial el grupo 0 mas de 4SMLV. Medios de Busqueda No importa.
+
+*Cuarto: Pruebas de independencia de la variable Y con todas las covariables (Menos la(s)cuantitativas). Las variables que tengan asociacion son las que se incluiran al modelo.
+
+*Quinto: Revisar el balanceo de la variable Y. En este caso se busca que la relacion de los dos grupos este lo mas cercano posible al 50-50%. En caso de no tener balanceo se debe aplicar técnicas de lower y upper.
+
+*Sexto: Crear dos bases, entrenamiento y prueba (80-20) (90-10)
+
+*Septimo: Corre el modelo con el entrenamiendo y se aplican las pruebas a la base de prueba (test).
+
+*Octavo: Se corre el modelo con todos los datos y se interpreta.
+
+
+#--------
+
+Paso1: Cargar paquetes
+```{r}
+# install.packages("dplyr") ; library(dplyr)
+# install.packages("caret") ; library(caret)
+# install.packages("haven"); library(haven)
+# install.packages("ROSE") ; library(ROSE)
+# install.packages("imbalance"); library(imbalance)
+# install.packages("smotefamily");library(smotefamily)
+```
+
+paso2 Trasformar las variables categóricas a factor
+
+```{r}
+names(base)
+#posteriormente se realiza una tabla para la variable que se denominara dependiente o y.
+table(base$Ocupado)
+
+
+#Primero se deben eliminar todos los valores faltantes
+base1<- na.omit(base)# Elimina toda la fila que contenga por lo menos un dato faltante
+base1<-base1[,-1]# Se elimina la primera columna correspondiente a la variable Ciudad
+
+#Segundo se convierte la variable Y (Ocupado) en 0 y 1
+base1$Ocupado<-ifelse(base1$Ocupado == "No", 0,1)
+base1$Ocupado<-as.factor(base1$Ocupado)
+
+base1$Edad<-ifelse(base1$Edad =="18 - 28 años", 1,
+	          ifelse(base1$Edad == "29 - 40 años" , 2,
+	          ifelse(base1$Edad == "41 - 60 años", 3, 4)))
+base1$Edad<-as.factor(base1$Edad)
+table(base1$Edad)
+
+base1$Sexo<-ifelse(base1$Sexo == "Mujer", 0,1)
+base1$Sexo<-as.factor(base1$Sexo)
+
+base1$Estado_Civil<-as.factor(base1$Estado_Civil)
+
+base1$Nivel_Estudio<- ifelse(base1$Nivel_Estudio=="Posgrado",1,
+ifelse(base1$Nivel_Estudio=="Primaria",2,
+ifelse(base1$Nivel_Estudio=="Bachillerato",3,
+ifelse(base1$Nivel_Estudio=="Técnico",4,5))))
+
+
+base1$Nivel_Estudio<-as.factor(base1$Nivel_Estudio)
+
+base1$`Jefe(a)_Hogar`<-ifelse(base1$`Jefe(a)_Hogar`=="No",0,1)
+base1$`Jefe(a)_Hogar`<-as.factor(base1$`Jefe(a)_Hogar`)
+
+base1$Salario<-as.factor(base1$Salario)
+
+base1$Medio_de_busqueda<-as.factor(base1$Salario)
+
+base1$Medio_de_busqueda<-as.factor(base1$Medio_de_busqueda)
+```
+# paso 3: Balanceo de la base por la variable Y
+
+En este apartado se verificara si la variable Y esta balanceada o no , en caso que no este balanceada se debe hacer la correccion:
+
+```{r}
+#Para veificar el balanceo de la variable se generara una tabla
+
+tabla<-table(base1$Ocupado)
+tabla
+
+100*prop.table(tabla)#Porcentajes
+```
+como se presenta un desbalanceo se procederá con el siguiente codigo
+
+```{r}
+mayor<-base1%>%filter(Ocupado==1) #categoria con mas info
+menor<-base1%>%filter(Ocupado==0) #categoria con menos info
+
+#Se seleccionara una muestra de la categoria mas grande para equilibrarla con la categoria de menos informacion
+set.seed(1234)
+muestra<-sample_n(mayor, nrow(menor))
+
+#Se genera la nueva base para el modelamiento
+basef<-bind_rows(muestra, menor)
+table(basef$Ocupado)
+
+```
+#Paso 4 :Definir el grado de relacion de la variable Y con las variables 
+cualitativas.
+
+Primero se debe definir el $\alpha$ para la lectura de todas las pruebas de 
+hipotesis que se realizaran en modelo, para este caso se trabajará con un$\alpha=0.1$
+Para definir si existe relacion entre la variable Y y las variables cualitativas
+se usara una prueba $\chi**2$, donde $H_0:$ No hay relacion entre la variable Y y la
+variable $X_i$ . Objetivo: Rechazar o no aceptar $H_0$.
+
+```{r}
+chisq.test(xtabs(~Ocupado + Edad, data = basef), correct=F)
+
+table(basef$Edad)
+```
+Se rechaza la hipotesis nula.
+```{r}
+chisq.test(xtabs(~Ocupado + Sexo, data = basef), correct=F)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Estado_Civil, data = basef), correct=F) #con alpha = 0.1 y p-valor= 0.5069, no se rechaza HO, por lo tanto estado civil no debe ir en el modelo.
+
+table(basef$Estado_Civil)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Nivel_Estudio, data = basef), correct=F) #con alpha = 0.1 y p-valor= 0.5069, no se rechaza HO, por lo tanto Nivel de Estudio no debe ir en el modelo.
+```
+```{r}
+chisq.test(xtabs(~Ocupado + `Jefe(a)_Hogar`, data = basef), correct=F)
+```
+
+```{r}
+chisq.test(xtabs(~Ocupado + Salario, data = basef), correct=F)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Medio_de_busqueda, data = basef), correct=F)
+```
+
+En resumen las variables que se usaran en el modelo son: Edad, Sexo, Jefe de hogar, 
+Aspiracion salarial y los medios de busqueda, ademas se incluiran la variable 
+cuantitativas Tiempo de busqueda
+
+
+# Paso 5: Generacion de entrenamiento y prueba del modelo.
+
+En este apartado se dividira la base final (basef) en dos partes (60-40 o 70-30 
+o 80-20 o 90-10) una parte para entrenar el modelo y una parte para probar el modelo 
+y determinar su efectividad, antes de correr el modelo con todos los datos.
+
+```{r}
+#install.packages("ggplot2")
+```
+
+
+```{r}
+library(ggplot2)
+BaseEntrenamiento<-createDataPartition(y=basef$Ocupado,
+                                       p=0.8, #El modelo entrenara con el 80% de la informacion y probara con 20%, lo importante es recordar que la particion debe sumar 100%
+                                       list=F)
+Entrenamiento<-basef[BaseEntrenamiento,]
+Test<-basef[-BaseEntrenamiento,]
+dim(Entrenamiento);dim(Test)
+
+
+```
+
+# paso 6: Generacion del modelo Logit para la base de Entrenamiento
+En este apartado se generara un modelo Logit o Logistico para la base de 
+Entrenamiento y posterior se usaran los datos de la base de prueba (Test) para
+determinar la efectividad del modelo propuesto.
+
+```{r}
+modeloE<-glm(Ocupado~Edad+Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+summary(modeloE)
+```
+
+Variables que funcionan: checar.
+Para el modelo anterior las variables que son significativas fueron: Intercepto,
+Sexo, Jefe de hogar, Aspiracion Salarial y Tiempo de busqueda. 
+
+```{r}
+modeloE1<-glm(Ocupado~Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+summary(modeloE1)
+```
+
+#paso 7: ajuste del modelo
+En esta seccion se determinara cual es el ajuste del modelo propuesto.
+Para ello primero sse debe pronosticar con la base test
+2do generar la matriz de confusion y algunas metricas de medicion de ajuste del modelo.
+
+```{r}
+entrenamientof<-predict(modeloE1, newdata=Test, type= "response")
+head(entrenamientof)
+# En esta parte se generan las probabilidades para la asignacion de grupo.
+```
+
+```{r}
+ocupadof<-factor(ifelse(entrenamientof>0.7,1,0))#En esta parte del codigo todas las probabilidadesque fueron mayores a 0.7 iran al grupo 1 y las restantes al grupo 0. Este valor se puede modificar de acuerdo a la condicion que desee poner el investigador. (Minimo 0.5, maximo 0.99)
+
+levels(ocupadof)<-c("Si","No")
+levels(Test$Ocupado)<-c("Si","No")
+confusionMatrix(ocupadof,
+                Test$Ocupado,
+                positive= "Si",
+                mode= "everything")
+```
+
+*11: De las personas que si estaban ocupadas predijo bien el modelo 11 de ellas en la base del test y solamente 1 quedo mal clasificada.
+
+*5: De las personas que no estaban ocupadas predijo mal 5 de ellas en la base del test y 7 de ellas quedaron bien  clasificadas.
+
+*Accuracy: 0.75. por cada 100 individuos nuevos que vaya a clasificar desde el inicio 75 de ellos quedaran bien clasificados y 25 mal clasificados.
+
+*95% CI: (0.5329, 0.9023). El Accuracy puede variar entre .53 y .90.
+
+# Paso 8: Modelo con la base completa.
+
+Podemos usar el codigo del modelo deputado usado con el entrenamiento
+
+```{r}
+modelo_final<-glm(Ocupado~Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=basef, family="binomial")
+summary(modelo_final)
+```
+
+Interpretaciones:
+*Sexo1: 0.878628 Pasar de Hombre(Sexo1) a Mujer(Sexo0  o grupo de comparacion) aumenta (porque el signo del Estimate es positivo) la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*Forma2: Sexo1 0.878628 Pasar de Hombre(Sexo1) a Mujer(Sexo0  o grupo de comparacion) aumenta (porque el signo del Estimate es positivo) la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*Jefe de Hogar:1.681943. Pasar de SI Jefe de hogar a NO jefe de hogar( grupo de comparacion) aumenta (porque el signo del Estimate es positivo) en 1.68 veces la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*SalarioEntre 1 y 4 SMLV 1.043376 Pasar de una Aspiracion Sarlarial entre 1 y 4 SMLV a una Aspiracion de 1 SMLV ( grupo de comparacion) aumenta (porque el signo del Estimate es positivo)en 1.04 veces la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta) 
+
+*Tiempo_de_busqueda: -0.014309: Por cada semana que aumente la persona en el tiempo de busqueda (Aumento de una unidad en la variable), disminuye(porque el signo es negativo) la probabilidad en 0.014309 o 1.4309% (Se lee el valor absoluto) de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
