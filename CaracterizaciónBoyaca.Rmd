@@ -172,5 +172,170 @@ En el grafico se evidencia una relacion de las mujeres con el grupo de edad de 2
 *Octavo: Se corre el modelo con todos los datos y se interpreta.
 
 
+#--------
 
+Paso1: Cargar paquetes
+```{r}
+# install.packages("dplyr") ; library(dplyr)
+# install.packages("caret") ; library(caret)
+# install.packages("haven"); library(haven)
+# install.packages("ROSE") ; library(ROSE)
+# install.packages("imbalance"); library(imbalance)
+# install.packages("smotefamily");library(smotefamily)
+```
+
+paso2 Trasformar las variables categóricas a factor
+
+```{r}
+names(base)
+#posteriormente se realiza una tabla para la variable que se denominara dependiente o y.
+table(base$Ocupado)
+
+
+#Primero se deben eliminar todos los valores faltantes
+base1<- na.omit(base)# Elimina toda la fila que contenga por lo menos un dato faltante
+base1<-base1[,-1]# Se elimina la primera columna correspondiente a la variable Ciudad
+
+#Segundo se convierte la variable Y (Ocupado) en 0 y 1
+base1$Ocupado<-ifelse(base1$Ocupado == "No", 0,1)
+base1$Ocupado<-as.factor(base1$Ocupado)
+
+base1$Edad<-ifelse(base1$Edad =="18 - 28 años", 1,
+	          ifelse(base1$Edad == "29 - 40 años" , 2,
+	          ifelse(base1$Edad == "41 - 60 años", 3, 4)))
+base1$Edad<-as.factor(base1$Edad)
+table(base1$Edad)
+
+base1$Sexo<-ifelse(base1$Sexo == "Mujer", 0,1)
+base1$Sexo<-as.factor(base1$Sexo)
+
+base1$Estado_Civil<-as.factor(base1$Estado_Civil)
+
+base1$Nivel_Estudio<- ifelse(base1$Nivel_Estudio=="Posgrado",1,
+ifelse(base1$Nivel_Estudio=="Primaria",2,
+ifelse(base1$Nivel_Estudio=="Bachillerato",3,
+ifelse(base1$Nivel_Estudio=="Técnico",4,5))))
+
+
+base1$Nivel_Estudio<-as.factor(base1$Nivel_Estudio)
+
+base1$`Jefe(a)_Hogar`<-ifelse(base1$`Jefe(a)_Hogar`=="No",0,1)
+base1$`Jefe(a)_Hogar`<-as.factor(base1$`Jefe(a)_Hogar`)
+
+base1$Salario<-as.factor(base1$Salario)
+
+base1$Medio_de_busqueda<-as.factor(base1$Salario)
+
+base1$Medio_de_busqueda<-as.factor(base1$Medio_de_busqueda)
+```
+# paso 3: Balanceo de la base por la variable Y
+
+En este apartado se verificara si la variable Y esta balanceada o no , en caso que no este balanceada se debe hacer la correccion:
+
+```{r}
+#Para veificar el balanceo de la variable se generara una tabla
+
+tabla<-table(base1$Ocupado)
+tabla
+
+100*prop.table(tabla)#Porcentajes
+```
+como se presenta un desbalanceo se procederá con el siguiente codigo
+
+```{r}
+mayor<-base1%>%filter(Ocupado==1) #categoria con mas info
+menor<-base1%>%filter(Ocupado==0) #categoria con menos info
+
+#Se seleccionara una muestra de la categoria mas grande para equilibrarla con la categoria de menos informacion
+set.seed(1234)
+muestra<-sample_n(mayor, nrow(menor))
+
+#Se genera la nueva base para el modelamiento
+basef<-bind_rows(muestra, menor)
+table(basef$Ocupado)
+
+```
+#Paso 4 :Definir el grado de relacion de la variable Y con las variables 
+cualitativas.
+
+Primero se debe definir el $\alpha$ para la lectura de todas las pruebas de 
+hipotesis que se realizaran en modelo, para este caso se trabajará con un$\alpha=0.1$
+Para definir si existe relacion entre la variable Y y las variables cualitativas
+se usara una prueba $\chi**2$, donde $H_0:$ No hay relacion entre la variable Y y la
+variable $X_i$ . Objetivo: Rechazar o no aceptar $H_0$.
+
+```{r}
+chisq.test(xtabs(~Ocupado + Edad, data = basef), correct=F)
+
+table(basef$Edad)
+```
+Se rechaza la hipotesis nula.
+```{r}
+chisq.test(xtabs(~Ocupado + Sexo, data = basef), correct=F)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Estado_Civil, data = basef), correct=F) #con alpha = 0.1 y p-valor= 0.5069, no se rechaza HO, por lo tanto estado civil no debe ir en el modelo.
+
+table(basef$Estado_Civil)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Nivel_Estudio, data = basef), correct=F) #con alpha = 0.1 y p-valor= 0.5069, no se rechaza HO, por lo tanto Nivel de Estudio no debe ir en el modelo.
+```
+```{r}
+chisq.test(xtabs(~Ocupado + `Jefe(a)_Hogar`, data = basef), correct=F)
+```
+
+```{r}
+chisq.test(xtabs(~Ocupado + Salario, data = basef), correct=F)
+```
+```{r}
+chisq.test(xtabs(~Ocupado + Medio_de_busqueda, data = basef), correct=F)
+```
+
+En resumen las variables que se usaran en el modelo son: Edad, Sexo, Jefe de hogar, 
+Aspiracion salarial y los medios de busqueda, ademas se incluiran la variable 
+cuantitativas Tiempo de busqueda
+
+
+# Paso 5: Generacion de entrenamiento y prueba del modelo.
+
+En este apartado se dividira la base final (basef) en dos partes (60-40 o 70-30 
+o 80-20 o 90-10) una parte para entrenar el modelo y una parte para probar el modelo 
+y determinar su efectividad, antes de correr el modelo con todos los datos.
+
+```{r}
+#install.packages("ggplot2")
+```
+
+
+```{r}
+library(ggplot2)
+BaseEntrenamiento<-createDataPartition(y=basef$Ocupado,
+                                       p=0.8, #El modelo entrenara con el 80% de la informacion y probara con 20%, lo importante es recordar que la particion debe sumar 100%
+                                       list=F)
+Entrenamiento<-basef[BaseEntrenamiento,]
+Test<-basef[-BaseEntrenamiento,]
+dim(Entrenamiento);dim(Test)
+
+
+```
+
+# paso 6: Generacion del modelo Logit para la base de Entrenamiento
+En este apartado se generara un modelo Logit o Logistico para la base de 
+Entrenamiento y posterior se usaran los datos de la base de prueba (Test) para
+determinar la efectividad del modelo propuesto.
+
+```{r}
+modeloE<-glm(Ocupado~Edad+sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+summary(modeloE)
+```
+
+Variables que funcionan: checar.
+Para el modelo anterior las variables que son significativas fueron: Intercepto,
+Sexo, Jefe de hogar, Aspiracion Salarial y Tiempo de busqueda. 
+
+```{r}
+modeloE1<-glm(Ocupado~sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+summary(modeloE1)
+```
 
