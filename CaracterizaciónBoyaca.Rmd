@@ -1,8 +1,9 @@
 ---
-title: "Estudio de las oportunidades laborales en Boyaca"
+title: "CaracterizacionBoyaca"
 author: "Brian Buitrago"
 output: word_document
 ---
+
 #Analisis Descriptivo
 
 base <- 
@@ -10,8 +11,11 @@ base <-
    rownames=FALSE, header=TRUE, na="", sheet="Hoja1", stringsAsFactors=TRUE)
 
 ```{r}
+library(dplyr)
+library(caret)
+
 library(readxl)
-base<- read_excel("C:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx")
+base<- read_excel("D:/Users/Tuptc/Downloads/Estudio de las Oportunidades Laborales en el Departamento de Boyacá  (respuestas) (2).xlsx")
 
 ```
 ```{r}
@@ -326,7 +330,7 @@ Entrenamiento y posterior se usaran los datos de la base de prueba (Test) para
 determinar la efectividad del modelo propuesto.
 
 ```{r}
-modeloE<-glm(Ocupado~Edad+sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+modeloE<-glm(Ocupado~Edad+Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
 summary(modeloE)
 ```
 
@@ -335,7 +339,57 @@ Para el modelo anterior las variables que son significativas fueron: Intercepto,
 Sexo, Jefe de hogar, Aspiracion Salarial y Tiempo de busqueda. 
 
 ```{r}
-modeloE1<-glm(Ocupado~sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
+modeloE1<-glm(Ocupado~Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=Entrenamiento, family="binomial")
 summary(modeloE1)
 ```
+
+#paso 7: ajuste del modelo
+En esta seccion se determinara cual es el ajuste del modelo propuesto.
+Para ello primero sse debe pronosticar con la base test
+2do generar la matriz de confusion y algunas metricas de medicion de ajuste del modelo.
+
+```{r}
+entrenamientof<-predict(modeloE1, newdata=Test, type= "response")
+head(entrenamientof)
+# En esta parte se generan las probabilidades para la asignacion de grupo.
+```
+
+```{r}
+ocupadof<-factor(ifelse(entrenamientof>0.7,1,0))#En esta parte del codigo todas las probabilidadesque fueron mayores a 0.7 iran al grupo 1 y las restantes al grupo 0. Este valor se puede modificar de acuerdo a la condicion que desee poner el investigador. (Minimo 0.5, maximo 0.99)
+
+levels(ocupadof)<-c("Si","No")
+levels(Test$Ocupado)<-c("Si","No")
+confusionMatrix(ocupadof,
+                Test$Ocupado,
+                positive= "Si",
+                mode= "everything")
+```
+
+*11: De las personas que si estaban ocupadas predijo bien el modelo 11 de ellas en la base del test y solamente 1 quedo mal clasificada.
+
+*5: De las personas que no estaban ocupadas predijo mal 5 de ellas en la base del test y 7 de ellas quedaron bien  clasificadas.
+
+*Accuracy: 0.75. por cada 100 individuos nuevos que vaya a clasificar desde el inicio 75 de ellos quedaran bien clasificados y 25 mal clasificados.
+
+*95% CI: (0.5329, 0.9023). El Accuracy puede variar entre .53 y .90.
+
+# Paso 8: Modelo con la base completa.
+
+Podemos usar el codigo del modelo deputado usado con el entrenamiento
+
+```{r}
+modelo_final<-glm(Ocupado~Sexo+`Jefe(a)_Hogar`+Salario+Medio_de_busqueda+ Tiempo_de_busqueda, data=basef, family="binomial")
+summary(modelo_final)
+```
+
+Interpretaciones:
+*Sexo1: 0.878628 Pasar de Hombre(Sexo1) a Mujer(Sexo0  o grupo de comparacion) aumenta (porque el signo del Estimate es positivo) la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*Forma2: Sexo1 0.878628 Pasar de Hombre(Sexo1) a Mujer(Sexo0  o grupo de comparacion) aumenta (porque el signo del Estimate es positivo) la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*Jefe de Hogar:1.681943. Pasar de SI Jefe de hogar a NO jefe de hogar( grupo de comparacion) aumenta (porque el signo del Estimate es positivo) en 1.68 veces la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
+
+*SalarioEntre 1 y 4 SMLV 1.043376 Pasar de una Aspiracion Sarlarial entre 1 y 4 SMLV a una Aspiracion de 1 SMLV ( grupo de comparacion) aumenta (porque el signo del Estimate es positivo)en 1.04 veces la probabilidad de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta) 
+
+*Tiempo_de_busqueda: -0.014309: Por cada semana que aumente la persona en el tiempo de busqueda (Aumento de una unidad en la variable), disminuye(porque el signo es negativo) la probabilidad en 0.014309 o 1.4309% (Se lee el valor absoluto) de pasar ocupado (1 en la variable respuesta) a No ocupado(0 en la variable respuesta)
 
