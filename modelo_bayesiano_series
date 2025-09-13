@@ -1,0 +1,56 @@
+---
+title: "Modelos BSTS"
+author: "Brian Buitrago"
+output: word_document
+---
+BSTS (Bayesian Structural Time Series).
+
+```{r}
+
+library(bsts)
+```
+
+
+```{r}
+library(readxl)
+Dolar<-read_excel("D:/Tuptc/Documents/Dolar.xlsx")
+
+dolar1<-Dolar
+dolar1$Dólar<-as.numeric(dolar1$Dólar)
+```
+
+
+```{r}
+
+# Paso 1: n de prueba, cuando son pocos datos se usa 0 o 1.
+n_test<-0
+
+#paso 2: Se genera la particion
+x<-as.numeric(length(dolar))-n_test
+x1<-x+n_test
+Base1<-dolar1[-c(x:x1),]
+d_prueba<-dolar1[c(x:x1),]
+
+
+# paso 3: Modelo BSTS
+ss1<-AddLocalLinearTrend(list(), dolar1$Dólar)# se puede tambien trabajar AddLocalLinearTrend
+ss1<-AddSeasonal(ss1,dolar1$Dólar, nseasons=2)# Se puede variar desde 2 hasta n/2+1, numeros enteros
+modelo1<-bsts(dolar1$Dólar, state.specification = ss1, niter=10)# niter se puede variar desde 10 hasta 10 millones en multiplos de 10.
+pred1<-predict(modelo1, horizon=n_test+1, burn=10*0.01)
+obs<-dolar1$Dólar
+pronostico<-pred1$mean
+MAPE<-100*(mean(abs(pronostico-obs)/obs));MAPE
+
+```
+
+#Pronostico
+```{r}
+ss1<-AddLocalLinearTrend(list(), dolar1$Dólar)
+ss1<-AddSeasonal(ss1,dolar1$Dólar, nseasons=2)
+modelo1<-bsts(dolar1$Dólar, state.specification = ss1, niter=10)
+pred1<-predict(modelo1, horizon=n_test+1, burn=10*0.01)
+obs<-dolar1$Dólar
+pronostico<-pred1$mean
+MAPE<-100*(mean(abs(pronostico-obs)/obs));MAPE
+```
+
