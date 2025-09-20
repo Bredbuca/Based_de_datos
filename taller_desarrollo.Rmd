@@ -1,0 +1,120 @@
+---
+title: "Taller"
+author: "Brian Buitrago"
+output: word_document
+---
+
+# Analisis Descriptivo
+
+
+```{r}
+library(readxl)
+base <- read_excel("D:/Tuptc/Documents/taller.xlsx")
+```
+
+
+```{r}
+library(dplyr)
+library(caret)
+```
+# Variables Cualitativas 
+##Tablas de contingencia con variables de interes.
+alpha del 0.1
+Relacion entre Departamento y Sexo.
+```{r}
+#tablas de contingencia 
+local({
+  .Table <- xtabs(~Departamento+Sexo, 
+  data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+  
+```
+Dado H_0: hay independencia entre Departamento y Sexo, por lo tanto no se rechaza H_0 p-valor de 0.7337 y alpha de 0.1
+
+Relacion entre Departamento y Nivel de Estudio
+```{r}
+local({
+  .Table <- xtabs(~Departamento+Nivel_Estudios, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+```
+Dado H_0: hay independencia entre Departamento y Nivel de estudios, por lo tanto no se rechaza H_0 p-valor de 0.8579 y alpha de 0.1.
+
+Relacion entre Departamento y Por que votara
+```{r}
+local({
+  .Table <- xtabs(~Departamento+Por_qué_Votará, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+  
+})
+```
+Dado H_0: hay independencia entre Departamento y Porque votara, por lo tanto no se rechaza H_0 p-valor de 0.4269 y alpha de 0.1.
+
+
+Relacion entre Departamento y Afinidad partido Politico
+
+```{r}
+local({
+  .Table <- xtabs(~Departamento+Afinidad_Partido_Político, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+```
+Dado H_0: hay independencia entre Departamento y Afinidad partido Politico, por lo tanto se rechaza H_0 p-valor de 0.008619 y alpha de 0.1.
+
+Relacion entre Departamento y candidato presidencial
+```{r}
+local({
+  .Table <- xtabs(~Departamento+Candidato_Presidencial, data=base)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  .Test <- chisq.test(.Table, correct=FALSE)
+  print(.Test)
+})
+```
+
+Dado H_0: hay independencia entre Departamento y Porque votara, por lo tanto no se rechaza H_0 p-valor de 0.4239 y alpha de 0.1.
+
+
+
+## Variables cuantitativas
+
+```{r}
+library(RcmdrMisc)
+library(e1071, pos=21)
+numSummary(base[,"Edad", drop=FALSE], 
+  statistics=c("mean", "sd", "IQR", "cv","median")) #"quantiles", 
+  #quantiles=c(0,.25,.5,.75,1))
+```
+En promedio las edades de la encuesta es de 34~35 años aunque hay un alto grado
+de variabilidad.
+
+
+
+```{r}
+
+numSummary(base[,"Estrato", drop=FALSE], 
+  statistics=c("mean", "sd", "IQR", "cv","median")) #"quantiles", 
+  #quantiles=c(0,.25,.5,.75,1))
+```
+
+En promedio las personas de la encuesta estan en el estrato 2~3.Tambien se 
+evidencia gran variacion. 
+
+
+
+
+
+
